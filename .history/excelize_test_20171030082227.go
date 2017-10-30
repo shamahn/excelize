@@ -902,7 +902,7 @@ func TestRemoveRow(t *testing.T) {
 			xlsx.SetCellStr("Sheet1", axis, axis)
 		}
 	}
-	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/shamahn/excelize", "External")
+	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/xuri/excelize", "External")
 	xlsx.RemoveRow("Sheet1", -1)
 	xlsx.RemoveRow("Sheet1", 4)
 	xlsx.MergeCell("Sheet1", "B3", "B5")

@@ -831,7 +831,7 @@ func TestInsertCol(t *testing.T) {
 			xlsx.SetCellStr("Sheet1", axis, axis)
 		}
 	}
-	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/shamahn/excelize", "External")
+	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/xuri/excelize", "External")
 	xlsx.MergeCell("Sheet1", "A1", "C3")
 	err := xlsx.AutoFilter("Sheet1", "A2", "B2", `{"column":"B","expression":"x != blanks"}`)
 	t.Log(err)
@@ -850,7 +850,7 @@ func TestRemoveCol(t *testing.T) {
 			xlsx.SetCellStr("Sheet1", axis, axis)
 		}
 	}
-	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/shamahn/excelize", "External")
+	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/xuri/excelize", "External")
 	xlsx.SetCellHyperLink("Sheet1", "C5", "https://github.com", "External")
 	xlsx.MergeCell("Sheet1", "A1", "B1")
 	xlsx.MergeCell("Sheet1", "A2", "B2")
@@ -870,7 +870,7 @@ func TestInsertRow(t *testing.T) {
 			xlsx.SetCellStr("Sheet1", axis, axis)
 		}
 	}
-	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/shamahn/excelize", "External")
+	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/xuri/excelize", "External")
 	xlsx.InsertRow("Sheet1", -1)
 	xlsx.InsertRow("Sheet1", 4)
 	err := xlsx.SaveAs("./test/Workbook_insertrow.xlsx")
@@ -902,7 +902,7 @@ func TestRemoveRow(t *testing.T) {
 			xlsx.SetCellStr("Sheet1", axis, axis)
 		}
 	}
-	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/shamahn/excelize", "External")
+	xlsx.SetCellHyperLink("Sheet1", "A5", "https://github.com/xuri/excelize", "External")
 	xlsx.RemoveRow("Sheet1", -1)
 	xlsx.RemoveRow("Sheet1", 4)
 	xlsx.MergeCell("Sheet1", "B3", "B5")

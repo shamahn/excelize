@@ -42,7 +42,7 @@ func parseFormatPictureSet(formatSet string) *formatPicture {
 //        _ "image/jpeg"
 //        _ "image/png"
 //
-//        "github.com/shamahn/excelize"
+//        "github.com/xuri/excelize"
 //    )
 //
 //    func main() {
