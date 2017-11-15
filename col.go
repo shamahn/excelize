@@ -266,7 +266,7 @@ func (f *File) RemoveCol(sheet, column string) {
 			axis := v.R
 			col := string(strings.Map(letterOnlyMapF, axis))
 			if col == column {
-				xlsx.SheetData.Row[r].C = append(xlsx.SheetData.Row[r].C[:k], xlsx.SheetData.Row[r].C[k+1:]...)
+				delete(xlsx.SheetData.Row[r].C, k)
 			}
 		}
 	}
@@ -276,17 +276,20 @@ func (f *File) RemoveCol(sheet, column string) {
 
 // Completion column element tags of XML in a sheet.
 func completeCol(xlsx *xlsxWorksheet, row, cell int) {
-	buffer := bytes.Buffer{}
-	for r := range xlsx.SheetData.Row {
+	r := row - 1
+	{
 		if len(xlsx.SheetData.Row[r].C) < cell {
-			start := len(xlsx.SheetData.Row[r].C)
-			for iii := start; iii < cell; iii++ {
-				buffer.WriteString(ToAlphaString(iii))
-				buffer.WriteString(strconv.Itoa(r + 1))
-				xlsx.SheetData.Row[r].C = append(xlsx.SheetData.Row[r].C, xlsxC{
-					R: buffer.String(),
-				})
-				buffer.Reset()
+			iii := cell - 1
+			{
+				if xlsx.SheetData.Row[r].C[iii].R == "" {
+					buffer := bytes.Buffer{}
+					buffer.WriteString(ToAlphaString(iii))
+					buffer.WriteString(strconv.Itoa(r + 1))
+					xlsx.SheetData.Row[r].C[iii] = xlsxC{
+						R: buffer.String(),
+					}
+					buffer.Reset()
+				}
 			}
 		}
 	}

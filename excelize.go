@@ -119,11 +119,11 @@ func checkSheet(xlsx *xlsxWorksheet) {
 	for i := 0; i < row; i++ {
 		_, ok := existsRows[i+1]
 		if ok {
-			sheetData.Row = append(sheetData.Row, xlsx.SheetData.Row[existsRows[i+1]])
+			sheetData.Row[i+1] = xlsx.SheetData.Row[existsRows[i+1]]
 		} else {
-			sheetData.Row = append(sheetData.Row, xlsxRow{
+			sheetData.Row[i+1] = xlsxRow{
 				R: i + 1,
-			})
+			}
 		}
 	}
 	xlsx.SheetData = sheetData
@@ -170,8 +170,10 @@ func (f *File) UpdateLinkedValue() {
 		for indexR := range xlsx.SheetData.Row {
 			for indexC, col := range xlsx.SheetData.Row[indexR].C {
 				if col.F != nil && col.V != "" {
-					xlsx.SheetData.Row[indexR].C[indexC].V = ""
-					xlsx.SheetData.Row[indexR].C[indexC].T = ""
+					tCol := xlsx.SheetData.Row[indexR].C[indexC]
+					tCol.V = ""
+					tCol.T = ""
+					xlsx.SheetData.Row[indexR].C[indexC] = tCol
 				}
 			}
 		}
@@ -210,7 +212,9 @@ func (f *File) adjustColDimensions(xlsx *xlsxWorksheet, column, offset int) {
 			row, _ := strconv.Atoi(strings.Map(intOnlyMapF, axis))
 			yAxis := TitleToNumber(col)
 			if yAxis >= column && column != -1 {
-				xlsx.SheetData.Row[i].C[k].R = ToAlphaString(yAxis+offset) + strconv.Itoa(row)
+				tCol := xlsx.SheetData.Row[i].C[k]
+				tCol.R = ToAlphaString(yAxis+offset) + strconv.Itoa(row)
+				xlsx.SheetData.Row[i].C[k] = tCol
 			}
 		}
 	}
@@ -224,14 +228,18 @@ func (f *File) adjustRowDimensions(xlsx *xlsxWorksheet, rowIndex, offset int) {
 	}
 	for i, r := range xlsx.SheetData.Row {
 		if r.R >= rowIndex {
-			xlsx.SheetData.Row[i].R += offset
+			tRow := xlsx.SheetData.Row[i]
+			tRow.R += offset
 			for k, v := range xlsx.SheetData.Row[i].C {
 				axis := v.R
 				col := string(strings.Map(letterOnlyMapF, axis))
 				row, _ := strconv.Atoi(strings.Map(intOnlyMapF, axis))
 				xAxis := row + offset
-				xlsx.SheetData.Row[i].C[k].R = col + strconv.Itoa(xAxis)
+				tCol := tRow.C[k]
+				tCol.R = col + strconv.Itoa(xAxis)
+				tRow.C[k] = tCol
 			}
+			xlsx.SheetData.Row[i] = tRow
 		}
 	}
 }
@@ -391,7 +399,9 @@ func (f *File) adjustAutoFilterHelper(xlsx *xlsxWorksheet, column, rowIndex, off
 			xlsx.AutoFilter = nil
 			for i, r := range xlsx.SheetData.Row {
 				if begrow < r.R && r.R <= endrow {
-					xlsx.SheetData.Row[i].Hidden = false
+					tRow := xlsx.SheetData.Row[i]
+					tRow.Hidden = false
+					xlsx.SheetData.Row[i] = tRow
 				}
 			}
 		}

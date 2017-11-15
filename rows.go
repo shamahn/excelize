@@ -114,8 +114,11 @@ func (f *File) SetRowHeight(sheet string, rowIndex int, height float64) {
 	rows := rowIndex + 1
 	cells := 0
 	completeRow(xlsx, rows, cells)
-	xlsx.SheetData.Row[rowIndex].Ht = height
-	xlsx.SheetData.Row[rowIndex].CustomHeight = true
+	tRow := xlsx.SheetData.Row[rowIndex]
+	tRow.Ht = height
+	tRow.CustomHeight = true
+
+	xlsx.SheetData.Row[rowIndex] = tRow
 }
 
 // getRowHeight provides function to get row height in pixels by given sheet
@@ -187,11 +190,13 @@ func (f *File) SetRowVisible(sheet string, rowIndex int, visible bool) {
 	rows := rowIndex + 1
 	cells := 0
 	completeRow(xlsx, rows, cells)
+	tRow := xlsx.SheetData.Row[rowIndex]
 	if visible {
-		xlsx.SheetData.Row[rowIndex].Hidden = false
+		tRow.Hidden = false
 		return
 	}
-	xlsx.SheetData.Row[rowIndex].Hidden = true
+	tRow.Hidden = true
+	xlsx.SheetData.Row[rowIndex] = tRow
 }
 
 // GetRowVisible provides a function to get visible of a single row by given
@@ -221,7 +226,7 @@ func (f *File) RemoveRow(sheet string, row int) {
 	row++
 	for i, r := range xlsx.SheetData.Row {
 		if r.R == row {
-			xlsx.SheetData.Row = append(xlsx.SheetData.Row[:i], xlsx.SheetData.Row[i+1:]...)
+			delete(xlsx.SheetData.Row, i)
 			f.adjustHelper(sheet, -1, row, -1)
 			return
 		}
@@ -275,17 +280,22 @@ func checkRow(xlsx *xlsxWorksheet) {
 			endCol := TitleToNumber(endR) + 1
 			if lenCol < endCol {
 				oldRow := xlsx.SheetData.Row[k].C
-				xlsx.SheetData.Row[k].C = xlsx.SheetData.Row[k].C[:0]
-				tmp := []xlsxC{}
+				for c := range xlsx.SheetData.Row[k].C {
+					delete(xlsx.SheetData.Row[k].C, c)
+				}
+				tmp := make(ECols)
 				for i := 0; i <= endCol; i++ {
 					buffer.WriteString(ToAlphaString(i))
 					buffer.WriteString(strconv.Itoa(endRow))
-					tmp = append(tmp, xlsxC{
+					tmp[i] = xlsxC{
 						R: buffer.String(),
-					})
+					}
 					buffer.Reset()
 				}
-				xlsx.SheetData.Row[k].C = tmp
+				tRow := xlsx.SheetData.Row[k]
+				tRow.C = tmp
+				xlsx.SheetData.Row[k] = tRow
+
 				for _, y := range oldRow {
 					colAxis := TitleToNumber(string(strings.Map(letterOnlyMapF, y.R)))
 					xlsx.SheetData.Row[k].C[colAxis] = y
@@ -299,29 +309,40 @@ func checkRow(xlsx *xlsxWorksheet) {
 // single row and make that is continuous in a worksheet of XML by given row
 // index and axis.
 func completeRow(xlsx *xlsxWorksheet, row, cell int) {
-	currentRows := len(xlsx.SheetData.Row)
-	if currentRows > 1 {
-		lastRow := xlsx.SheetData.Row[currentRows-1].R
-		if lastRow >= row {
-			row = lastRow
+	if xlsx.SheetData.Row == nil {
+		xlsx.SheetData.Row = make(ERows)
+	}
+
+	i := row - 1
+	{
+		if xlsx.SheetData.Row[i].R > 0 {
+			return
+		}
+		xlsx.SheetData.Row[i] = xlsxRow{
+			R: i + 1,
 		}
 	}
-	for i := currentRows; i < row; i++ {
-		xlsx.SheetData.Row = append(xlsx.SheetData.Row, xlsxRow{
-			R: i + 1,
-		})
-	}
-	buffer := bytes.Buffer{}
-	for ii := currentRows; ii < row; ii++ {
+
+	ii := row - 1
+	{
+		if xlsx.SheetData.Row[ii].C == nil {
+			tRow := xlsx.SheetData.Row[ii]
+			tRow.C = make(ECols)
+			xlsx.SheetData.Row[ii] = tRow
+		}
 		start := len(xlsx.SheetData.Row[ii].C)
 		if start == 0 {
-			for iii := start; iii < cell; iii++ {
-				buffer.WriteString(ToAlphaString(iii))
-				buffer.WriteString(strconv.Itoa(ii + 1))
-				xlsx.SheetData.Row[ii].C = append(xlsx.SheetData.Row[ii].C, xlsxC{
-					R: buffer.String(),
-				})
-				buffer.Reset()
+			iii := cell - 1
+			{
+				if xlsx.SheetData.Row[ii].C[iii].R == "" {
+					buffer := bytes.Buffer{}
+					buffer.WriteString(ToAlphaString(iii))
+					buffer.WriteString(strconv.Itoa(ii + 1))
+					xlsx.SheetData.Row[ii].C[iii] = xlsxC{
+						R: buffer.String(),
+					}
+					buffer.Reset()
+				}
 			}
 		}
 	}

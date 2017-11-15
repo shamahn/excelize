@@ -76,7 +76,11 @@ func (f *File) worksheetWriter() {
 	for path, sheet := range f.Sheet {
 		if sheet != nil {
 			for k, v := range sheet.SheetData.Row {
-				f.Sheet[path].SheetData.Row[k].C = trimCell(v.C)
+				tRow := f.Sheet[path].SheetData.Row[k]
+				tCell := tRow.C
+				tCell = trimCell(v.C)
+				tRow.C = tCell
+				f.Sheet[path].SheetData.Row[k] = tRow
 			}
 			output, _ := xml.Marshal(sheet)
 			f.saveFileList(path, replaceWorkSheetsRelationshipsNameSpace(string(output)))
@@ -89,11 +93,11 @@ func (f *File) worksheetWriter() {
 }
 
 // trimCell provides function to trim blank cells which created by completeCol.
-func trimCell(column []xlsxC) []xlsxC {
-	col := []xlsxC{}
-	for _, c := range column {
+func trimCell(column ECols) ECols {
+	col := ECols{}
+	for i, c := range column {
 		if c.S != 0 || c.V != "" || c.F != nil || c.T != "" {
-			col = append(col, c)
+			col[i] = c
 		}
 	}
 	return col

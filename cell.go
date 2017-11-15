@@ -45,6 +45,9 @@ func (f *File) mergeCellsParser(xlsx *xlsxWorksheet, axis string) string {
 // Note that default date format is m/d/yy h:mm of time.Time type value. You can
 // set numbers format by SetCellStyle() method.
 func (f *File) SetCellValue(sheet, axis string, value interface{}) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	switch t := value.(type) {
 	case int:
 		f.SetCellInt(sheet, axis, value.(int))
@@ -89,6 +92,9 @@ func (f *File) SetCellValue(sheet, axis string, value interface{}) {
 // cell value, it will do so, if not then an error will be returned, along with
 // the raw value of the cell.
 func (f *File) GetCellValue(sheet, axis string) string {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	row, err := strconv.Atoi(strings.Map(intOnlyMapF, axis))
@@ -110,7 +116,9 @@ func (f *File) GetCellValue(sheet, axis string) string {
 		if xlsx.SheetData.Row[k].R == row {
 			for i := range xlsx.SheetData.Row[k].C {
 				if axis == xlsx.SheetData.Row[k].C[i].R {
-					val, _ := xlsx.SheetData.Row[k].C[i].getValueFrom(f, f.sharedStringsReader())
+					tCol := xlsx.SheetData.Row[k].C[i]
+					val, _ := tCol.getValueFrom(f, f.sharedStringsReader())
+					xlsx.SheetData.Row[k].C[i] = tCol
 					return val
 				}
 			}
@@ -137,6 +145,9 @@ func (f *File) formattedValue(s int, v string) string {
 // GetCellStyle provides function to get cell style index by given worksheet
 // name and cell coordinates.
 func (f *File) GetCellStyle(sheet, axis string) int {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	col := string(strings.Map(letterOnlyMapF, axis))
@@ -159,6 +170,9 @@ func (f *File) GetCellStyle(sheet, axis string) int {
 // GetCellFormula provides function to get formula from cell by given worksheet
 // name and axis in XLSX file.
 func (f *File) GetCellFormula(sheet, axis string) string {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	row, err := strconv.Atoi(strings.Map(intOnlyMapF, axis))
@@ -193,6 +207,9 @@ func (f *File) GetCellFormula(sheet, axis string) string {
 // SetCellFormula provides function to set cell formula by given string and
 // sheet index.
 func (f *File) SetCellFormula(sheet, axis, formula string) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	col := string(strings.Map(letterOnlyMapF, axis))
@@ -215,7 +232,9 @@ func (f *File) SetCellFormula(sheet, axis, formula string) {
 		f := xlsxF{
 			Content: formula,
 		}
-		xlsx.SheetData.Row[xAxis].C[yAxis].F = &f
+		tCol := xlsx.SheetData.Row[xAxis].C[yAxis]
+		tCol.F = &f
+		xlsx.SheetData.Row[xAxis].C[yAxis] = tCol
 	}
 }
 
@@ -234,6 +253,9 @@ func (f *File) SetCellFormula(sheet, axis, formula string) {
 //    xlsx.SetCellHyperLink("Sheet1", "A3", "Sheet1!A40", "Location")
 //
 func (f *File) SetCellHyperLink(sheet, axis, link, linkType string) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	linkTypes := map[string]xlsxHyperlink{
@@ -264,6 +286,9 @@ func (f *File) SetCellHyperLink(sheet, axis, link, linkType string) {
 //    link, target := xlsx.GetCellHyperLink("Sheet1", "H6")
 //
 func (f *File) GetCellHyperLink(sheet, axis string) (bool, string) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	var link bool
 	var target string
 	xlsx := f.workSheetReader(sheet)
@@ -291,6 +316,9 @@ func (f *File) GetCellHyperLink(sheet, axis string) (bool, string) {
 // If you create a merged cell that overlaps with another existing merged cell,
 // those merged cells that already exist will be removed.
 func (f *File) MergeCell(sheet, hcell, vcell string) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	if hcell == vcell {
 		return
 	}
@@ -346,6 +374,9 @@ func (f *File) MergeCell(sheet, hcell, vcell string) {
 // SetCellInt provides function to set int type value of a cell by given
 // worksheet name, cell coordinates and cell value.
 func (f *File) SetCellInt(sheet, axis string, value int) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
 	col := string(strings.Map(letterOnlyMapF, axis))
@@ -362,9 +393,13 @@ func (f *File) SetCellInt(sheet, axis string, value int) {
 	completeRow(xlsx, rows, cell)
 	completeCol(xlsx, rows, cell)
 
-	xlsx.SheetData.Row[xAxis].C[yAxis].S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
-	xlsx.SheetData.Row[xAxis].C[yAxis].T = ""
-	xlsx.SheetData.Row[xAxis].C[yAxis].V = strconv.Itoa(value)
+	cCol := xlsx.SheetData.Row[xAxis].C[yAxis]
+
+	cCol.S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
+	cCol.T = ""
+	cCol.V = strconv.Itoa(value)
+
+	xlsx.SheetData.Row[xAxis].C[yAxis] = cCol
 }
 
 // prepareCellStyle provides function to prepare style index of cell in
@@ -385,9 +420,11 @@ func (f *File) prepareCellStyle(xlsx *xlsxWorksheet, col, style int) int {
 func (f *File) SetCellStr(sheet, axis, value string) {
 	xlsx := f.workSheetReader(sheet)
 	axis = f.mergeCellsParser(xlsx, axis)
+
 	if len(value) > 32767 {
 		value = value[0:32767]
 	}
+
 	col := string(strings.Map(letterOnlyMapF, axis))
 	row, err := strconv.Atoi(strings.Map(intOnlyMapF, axis))
 	if err != nil {
@@ -402,18 +439,22 @@ func (f *File) SetCellStr(sheet, axis, value string) {
 	completeRow(xlsx, rows, cell)
 	completeCol(xlsx, rows, cell)
 
+	tCol := xlsx.SheetData.Row[xAxis].C[yAxis]
+
 	// Leading space(s) character detection.
-	if len(value) > 0 {
+	if len(value) > 0 && value[0] == 32 {
 		if value[0] == 32 {
-			xlsx.SheetData.Row[xAxis].C[yAxis].XMLSpace = xml.Attr{
+			tCol.XMLSpace = xml.Attr{
 				Name:  xml.Name{Space: NameSpaceXML, Local: "space"},
 				Value: "preserve",
 			}
 		}
 	}
-	xlsx.SheetData.Row[xAxis].C[yAxis].S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
-	xlsx.SheetData.Row[xAxis].C[yAxis].T = "str"
-	xlsx.SheetData.Row[xAxis].C[yAxis].V = value
+	tCol.S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
+	tCol.T = "str"
+	tCol.V = value
+
+	xlsx.SheetData.Row[xAxis].C[yAxis] = tCol
 }
 
 // SetCellDefault provides function to set string type value of a cell as
@@ -435,9 +476,12 @@ func (f *File) SetCellDefault(sheet, axis, value string) {
 	completeRow(xlsx, rows, cell)
 	completeCol(xlsx, rows, cell)
 
-	xlsx.SheetData.Row[xAxis].C[yAxis].S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
-	xlsx.SheetData.Row[xAxis].C[yAxis].T = ""
-	xlsx.SheetData.Row[xAxis].C[yAxis].V = value
+	tCol := xlsx.SheetData.Row[xAxis].C[yAxis]
+	tCol.S = f.prepareCellStyle(xlsx, cell, xlsx.SheetData.Row[xAxis].C[yAxis].S)
+	tCol.T = ""
+	tCol.V = value
+
+	xlsx.SheetData.Row[xAxis].C[yAxis] = tCol
 }
 
 // checkCellInArea provides function to determine if a given coordinate is

@@ -255,8 +255,8 @@ type xlsxDimension struct {
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main - currently I have
 // not checked it for completeness - it does as much as I need.
 type xlsxSheetData struct {
-	XMLName xml.Name  `xml:"sheetData"`
-	Row     []xlsxRow `xml:"row"`
+	XMLName xml.Name `xml:"sheetData"`
+	Row     ERows    `xml:"row"`
 }
 
 // xlsxRow directly maps the row element. The element expresses information
@@ -275,7 +275,7 @@ type xlsxRow struct {
 	Spans        string  `xml:"spans,attr,omitempty"`
 	ThickBot     bool    `xml:"thickBot,attr,omitempty"`
 	ThickTop     bool    `xml:"thickTop,attr,omitempty"`
-	C            []xlsxC `xml:"c"`
+	C            ECols   `xml:"c"`
 }
 
 // xlsxMergeCell directly maps the mergeCell element. A single merged cell.
@@ -329,7 +329,7 @@ type xlsxSheetProtection struct {
 	AlgorithmName      string `xml:"algorithmName,attr,omitempty"`
 	AutoFilter         int    `xml:"autoFilter,attr,omitempty"`
 	DeleteColumns      int    `xml:"deleteColumns,attr,omitempty"`
-	DeleteRows         int    `xml:"deleteRows,attr,omitempty"`
+	DeletERows         int    `xml:"deletERows,attr,omitempty"`
 	FormatCells        int    `xml:"formatCells,attr,omitempty"`
 	FormatColumns      int    `xml:"formatColumns,attr,omitempty"`
 	FormatRows         int    `xml:"formatRows,attr,omitempty"`

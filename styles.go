@@ -2315,7 +2315,9 @@ func (f *File) SetCellStyle(sheet, hcell, vcell string, styleID int) {
 	for r, row := range xlsx.SheetData.Row {
 		for k, c := range row.C {
 			if checkCellInArea(c.R, hcell+":"+vcell) {
-				xlsx.SheetData.Row[r].C[k].S = styleID
+				tCell := xlsx.SheetData.Row[r].C[k]
+				tCell.S = styleID
+				xlsx.SheetData.Row[r].C[k] = tCell
 			}
 		}
 	}

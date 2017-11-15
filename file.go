@@ -88,3 +88,72 @@ func (f *File) Write(w io.Writer) error {
 
 	return nil
 }
+
+func (f *File) WriteWithoutSheets(w io.Writer, tmpfiles map[string]string) error {
+	buf := new(bytes.Buffer)
+	zw := zip.NewWriter(buf)
+	f.contentTypesWriter()
+	f.workbookWriter()
+	f.workbookRelsWriter()
+	f.worksheetWriter()
+	f.styleSheetWriter()
+	for path, content := range f.XLSX {
+		fi, err := zw.Create(path)
+		if err != nil {
+			return err
+		}
+		if tmpfiles[path] != "" {
+			filename := tmpfiles[path]
+			file, err := os.Open(filename)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = io.Copy(fi, file)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		_, err = fi.Write([]byte(content))
+		if err != nil {
+			return err
+		}
+	}
+	err := zw.Close()
+	if err != nil {
+		return err
+	}
+
+	if _, err := buf.WriteTo(w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (f *File) SaveWithTmp(name string, tmpfiles map[string]string) error {
+	file, err := os.OpenFile(name, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = f.WriteWithoutSheets(file, tmpfiles)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (f *File) Clean() {
+	f.XLSX = nil
+	f.ContentTypes = nil
+	f.SharedStrings = nil
+	f.Sheet = nil
+	f.Styles = nil
+	f.WorkBook = nil
+	f.WorkBookRels = nil
+	f = nil
+}
